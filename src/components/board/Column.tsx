@@ -1,7 +1,8 @@
+import { useDroppable } from '@dnd-kit/core';
 import { Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/board/EmptyState';
-import { TaskCard } from '@/components/board/TaskCard';
+import { SortableTaskCard } from '@/components/board/SortableTaskCard';
 import { TooltipIconButton } from '@/components/ui/TooltipIconButton';
 import type { BoardColumnConfig, Task } from '@/types/task';
 
@@ -11,6 +12,14 @@ interface ColumnProps {
 }
 
 export function Column({ column, tasks }: ColumnProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: column.id,
+    data: {
+      type: 'column',
+      status: column.id,
+    },
+  });
+
   return (
     <section
       className={`flex w-[20rem] min-w-[20rem] flex-col gap-3 rounded-[1.8rem] border p-3 shadow-[var(--tf-shell-shadow)] ${column.tone.shell}`}
@@ -39,11 +48,16 @@ export function Column({ column, tasks }: ColumnProps) {
         />
       </header>
 
-      <div className="flex min-h-[26rem] flex-1 flex-col gap-3 rounded-[1.35rem] border border-white/60 bg-white/35 p-2.5">
+      <div
+        ref={setNodeRef}
+        className={`flex min-h-[26rem] flex-1 flex-col gap-3 rounded-[1.35rem] border border-white/60 bg-white/35 p-2.5 transition-[background-color,box-shadow] duration-200 ${
+          isOver ? 'bg-white/45 ring-2 ring-white/80 ring-inset' : ''
+        }`}
+      >
         {tasks.length === 0 ? (
           <EmptyState className={column.tone.empty} />
         ) : (
-          tasks.map((task) => <TaskCard key={task.id} task={task} />)
+          tasks.map((task) => <SortableTaskCard key={task.id} task={task} />)
         )}
       </div>
     </section>

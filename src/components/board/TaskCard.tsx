@@ -1,9 +1,11 @@
+import type { CSSProperties, HTMLAttributes } from 'react';
+
 import { CalendarDays, Flag } from 'lucide-react';
 
 import { formatTaskDueDate, isTaskOverdue } from '@/lib/task-utils';
-import type { Task, TaskPriority } from '@/types/task';
+import type { Task, TaskCardDragProps, TaskPriority } from '@/types/task';
 
-interface TaskCardProps {
+interface TaskCardProps extends TaskCardDragProps {
   task: Task;
 }
 
@@ -45,13 +47,34 @@ function getAvatarTone(initials: string): string {
   return tones[index];
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({
+  task,
+  cardRef,
+  dragProps,
+  dragStyle,
+  isDragging = false,
+  isDragOverlay = false,
+}: TaskCardProps) {
   const priorityStyle = priorityStyles[task.priority];
   const isOverdue = isTaskOverdue(task);
+  const overdueDueDateBadgeClassName =
+    'inline-flex items-center gap-1.5 rounded-full border border-red-300/90 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-200/90 shadow-[0_12px_22px_-18px_rgba(220,38,38,0.45)]';
+  const overdueDueDateContentClassName = 'text-red-700';
+  const normalDueDateBadgeClassName =
+    'inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500';
+  const normalDueDateContentClassName = 'text-slate-500';
+  const cardStateClassName = isDragOverlay
+    ? 'cursor-grabbing rotate-[1deg] shadow-[0_30px_65px_-26px_rgba(15,23,42,0.34)] ring-2 ring-slate-200/80'
+    : isDragging
+      ? 'opacity-45 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.28)]'
+      : '';
 
   return (
     <article
-      className={`group cursor-grab rounded-[1.35rem] border border-slate-200/70 border-l-4 ${priorityStyle.rail} bg-white/92 p-4 shadow-[var(--tf-card-shadow)] transition-[transform,box-shadow,border-color,ring-color] duration-200 ease-out hover:-translate-y-1.5 hover:border-slate-300/90 hover:ring-2 hover:ring-slate-200/90 hover:shadow-[0_36px_72px_-28px_rgba(15,23,42,0.42),0_14px_30px_-20px_rgba(15,23,42,0.18)] active:cursor-grabbing`}
+      ref={cardRef}
+      style={dragStyle as CSSProperties | undefined}
+      {...(dragProps as HTMLAttributes<HTMLElement> | undefined)}
+      className={`group cursor-grab rounded-[1.35rem] border border-slate-200/70 border-l-4 ${priorityStyle.rail} bg-white/92 p-4 shadow-[var(--tf-card-shadow)] transition-[transform,box-shadow,border-color,ring-color,opacity] duration-200 ease-out hover:-translate-y-1.5 hover:border-slate-300/90 hover:ring-2 hover:ring-slate-200/90 hover:shadow-[0_36px_72px_-28px_rgba(15,23,42,0.42),0_14px_30px_-20px_rgba(15,23,42,0.18)] active:cursor-grabbing ${cardStateClassName}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-3">
@@ -68,16 +91,21 @@ export function TaskCard({ task }: TaskCardProps) {
               {priorityStyle.label}
             </span>
 
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                isOverdue
-                  ? 'border-rose-200 bg-rose-50 text-rose-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-500'
-              }`}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Due {formatTaskDueDate(task.dueDate)}
-            </span>
+            {isOverdue ? (
+              <span className={overdueDueDateBadgeClassName}>
+                <CalendarDays className={`h-3.5 w-3.5 ${overdueDueDateContentClassName}`} />
+                <span className={overdueDueDateContentClassName}>
+                  Due {formatTaskDueDate(task.dueDate)}
+                </span>
+              </span>
+            ) : (
+              <span className={normalDueDateBadgeClassName}>
+                <CalendarDays className={`h-3.5 w-3.5 ${normalDueDateContentClassName}`} />
+                <span className={normalDueDateContentClassName}>
+                  Due {formatTaskDueDate(task.dueDate)}
+                </span>
+              </span>
+            )}
           </div>
         </div>
 

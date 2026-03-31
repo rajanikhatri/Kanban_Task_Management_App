@@ -1,3 +1,5 @@
+import type { CSSProperties, HTMLAttributes } from 'react';
+
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'todo' | 'inProgress' | 'inReview' | 'done';
 
@@ -15,6 +17,14 @@ export interface Task {
   status: TaskStatus;
 }
 
+export interface TaskCardDragProps {
+  cardRef?: (node: HTMLElement | null) => void;
+  dragProps?: HTMLAttributes<HTMLElement>;
+  dragStyle?: CSSProperties;
+  isDragging?: boolean;
+  isDragOverlay?: boolean;
+}
+
 export interface ColumnTone {
   shell: string;
   header: string;
@@ -29,4 +39,15 @@ export interface BoardColumnConfig {
   title: string;
   hint: string;
   tone: ColumnTone;
+}
+
+export interface TaskDragData {
+  type: 'task';
+  taskId: string;
+  status: TaskStatus;
+}
+
+export interface ColumnDragData {
+  type: 'column';
+  status: TaskStatus;
 }

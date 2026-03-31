@@ -22,12 +22,6 @@ export function groupTasksByStatus(tasks: Task[]): Record<TaskStatus, Task[]> {
     groupedTasks[task.status].push(task);
   });
 
-  Object.values(groupedTasks).forEach((group) => {
-    group.sort((firstTask, secondTask) => {
-      return parseISO(firstTask.dueDate).getTime() - parseISO(secondTask.dueDate).getTime();
-    });
-  });
-
   return groupedTasks;
 }
 

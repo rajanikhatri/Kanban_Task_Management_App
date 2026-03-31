@@ -3,10 +3,13 @@ import { StatsBar } from '@/components/dashboard/StatsBar';
 import { Navbar } from '@/components/layout/Navbar';
 import { boardColumns } from '@/data/boardColumns';
 import { mockTasks } from '@/data/mockTasks';
+import { useBoardState } from '@/hooks/useBoardState';
 import { getBoardStats } from '@/lib/task-utils';
 
 export default function App() {
-  const stats = getBoardStats(mockTasks);
+  const { tasks, activeTask, handleDragStart, handleDragCancel, handleDragEnd } =
+    useBoardState(mockTasks);
+  const stats = getBoardStats(tasks);
 
   return (
     <div className="min-h-screen text-slate-900">
@@ -22,7 +25,14 @@ export default function App() {
         </section>
 
         <StatsBar stats={stats} />
-        <Board columns={boardColumns} tasks={mockTasks} />
+        <Board
+          columns={boardColumns}
+          tasks={tasks}
+          activeTask={activeTask}
+          onDragStart={handleDragStart}
+          onDragCancel={handleDragCancel}
+          onDragEnd={handleDragEnd}
+        />
       </main>
     </div>
   );

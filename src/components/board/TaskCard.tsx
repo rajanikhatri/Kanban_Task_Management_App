@@ -51,7 +51,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
   return (
     <article
-      className={`group rounded-[1.35rem] border border-white/70 border-l-4 ${priorityStyle.rail} bg-white/92 p-4 shadow-[var(--tf-card-shadow)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_28px_60px_-30px_rgba(15,23,42,0.38)]`}
+      className={`group cursor-grab rounded-[1.35rem] border border-slate-200/70 border-l-4 ${priorityStyle.rail} bg-white/92 p-4 shadow-[var(--tf-card-shadow)] transition-[transform,box-shadow,border-color,ring-color] duration-200 ease-out hover:-translate-y-1.5 hover:border-slate-300/90 hover:ring-2 hover:ring-slate-200/90 hover:shadow-[0_36px_72px_-28px_rgba(15,23,42,0.42),0_14px_30px_-20px_rgba(15,23,42,0.18)] active:cursor-grabbing`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-3">

@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/board/EmptyState';
 import { TaskCard } from '@/components/board/TaskCard';
+import { TooltipIconButton } from '@/components/ui/TooltipIconButton';
 import type { BoardColumnConfig, Task } from '@/types/task';
 
 interface ColumnProps {
@@ -30,13 +31,12 @@ export function Column({ column, tasks }: ColumnProps) {
           <p className="mt-1 text-xs text-slate-500">{column.hint}</p>
         </div>
 
-        <button
-          type="button"
+        <TooltipIconButton
           aria-label={`Add task to ${column.title}`}
-          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/80 bg-white/75 text-slate-500 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.35)] ${column.tone.button}`}
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+          tooltip="Add task to this column"
+          className={column.tone.button}
+          icon={<Plus className="h-4 w-4" />}
+        />
       </header>
 
       <div className="flex min-h-[26rem] flex-1 flex-col gap-3 rounded-[1.35rem] border border-white/60 bg-white/35 p-2.5">

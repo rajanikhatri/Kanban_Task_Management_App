@@ -91,21 +91,25 @@ export function TaskCard({
               {priorityStyle.label}
             </span>
 
-            {isOverdue ? (
-              <span className={overdueDueDateBadgeClassName}>
-                <CalendarDays className={`h-3.5 w-3.5 ${overdueDueDateContentClassName}`} />
-                <span className={overdueDueDateContentClassName}>
-                  Due {formatTaskDueDate(task.dueDate)}
-                </span>
-              </span>
-            ) : (
-              <span className={normalDueDateBadgeClassName}>
-                <CalendarDays className={`h-3.5 w-3.5 ${normalDueDateContentClassName}`} />
-                <span className={normalDueDateContentClassName}>
-                  Due {formatTaskDueDate(task.dueDate)}
-                </span>
-              </span>
-            )}
+            {task.dueDate
+              ? isOverdue
+                ? (
+                  <span className={overdueDueDateBadgeClassName}>
+                    <CalendarDays className={`h-3.5 w-3.5 ${overdueDueDateContentClassName}`} />
+                    <span className={overdueDueDateContentClassName}>
+                      Due {formatTaskDueDate(task.dueDate)}
+                    </span>
+                  </span>
+                )
+                : (
+                  <span className={normalDueDateBadgeClassName}>
+                    <CalendarDays className={`h-3.5 w-3.5 ${normalDueDateContentClassName}`} />
+                    <span className={normalDueDateContentClassName}>
+                      Due {formatTaskDueDate(task.dueDate)}
+                    </span>
+                  </span>
+                )
+              : null}
           </div>
         </div>
 

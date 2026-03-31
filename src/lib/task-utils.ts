@@ -42,5 +42,9 @@ export function formatTaskDueDate(dueDate: string): string {
 }
 
 export function isTaskOverdue(task: Task): boolean {
+  if (!task.dueDate) {
+    return false;
+  }
+
   return task.status !== 'done' && isBefore(parseISO(task.dueDate), startOfToday());
 }

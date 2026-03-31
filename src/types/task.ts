@@ -11,9 +11,18 @@ export interface Assignee {
 export interface Task {
   id: string;
   title: string;
+  description?: string;
   priority: TaskPriority;
-  dueDate: string;
+  dueDate?: string;
   assignee: Assignee;
+  status: TaskStatus;
+}
+
+export interface NewTaskInput {
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  dueDate?: string;
   status: TaskStatus;
 }
 

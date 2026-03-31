@@ -3,7 +3,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { useState } from 'react';
 
 import { groupTasksByStatus } from '@/lib/task-utils';
-import type { ColumnDragData, Task, TaskDragData, TaskStatus } from '@/types/task';
+import type { ColumnDragData, NewTaskInput, Task, TaskDragData, TaskStatus } from '@/types/task';
 
 const taskStatusOrder: TaskStatus[] = ['todo', 'inProgress', 'inReview', 'done'];
 
@@ -25,6 +25,10 @@ function getTaskStatusFromDropTarget(data: unknown): TaskStatus | null {
   }
 
   return null;
+}
+
+function createTaskId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `task-${Date.now()}`;
 }
 
 export function useBoardState(initialTasks: Task[]) {
@@ -120,9 +124,32 @@ export function useBoardState(initialTasks: Task[]) {
     });
   }
 
+  function addTask(taskInput: NewTaskInput) {
+    setTasks((currentTasks) => {
+      const tasksByStatus = groupTasksByStatus(currentTasks);
+      const newTask: Task = {
+        id: createTaskId(),
+        title: taskInput.title,
+        description: taskInput.description,
+        priority: taskInput.priority,
+        dueDate: taskInput.dueDate,
+        assignee: {
+          name: 'No Assignee',
+          initials: 'NA',
+        },
+        status: taskInput.status,
+      };
+
+      tasksByStatus[taskInput.status] = [...tasksByStatus[taskInput.status], newTask];
+
+      return flattenTasksByStatus(tasksByStatus);
+    });
+  }
+
   return {
     tasks,
     activeTask,
+    addTask,
     handleDragStart,
     handleDragCancel,
     handleDragEnd,

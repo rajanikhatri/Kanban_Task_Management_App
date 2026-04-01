@@ -1,23 +1,29 @@
 # TaskFlow
 
-TaskFlow is a production-style Kanban task manager built with React, TypeScript, Tailwind CSS, dnd-kit, and Supabase. It supports task creation, editing, deletion, drag-and-drop workflow updates, comments, activity history, search, filtering, and anonymous authentication.
+TaskFlow is a collaborative Kanban task manager built with React, TypeScript, Tailwind CSS, dnd-kit, and Supabase.
 
-## Overview
+The app supports real task workflows with drag and drop, task creation and editing, comments, activity history, search, filtering, anonymous authentication, and Supabase persistence.
 
-TaskFlow is designed to feel like a modern task management product instead of a static UI demo. Tasks are persisted in Supabase, organized across four workflow columns, and enriched with collaboration features through comments and activity tracking.
+## Live Demo
 
-## Features
+[TaskFlow on Vercel](https://kanban-task-management-app-nu.vercel.app/)
 
-- Four-column Kanban board: To Do, In Progress, In Review, Done
-- Drag-and-drop task movement across columns
+## Product Snapshot
+
+TaskFlow is designed to feel like a real project management product instead of a static UI demo. Users can move work across a four-stage board, open a task detail panel, discuss work through comments, and review a timeline of task activity.
+
+## Core Features
+
+- Four workflow columns: To Do, In Progress, In Review, Done
+- Drag and drop task movement across columns
 - Create, edit, and delete tasks
 - Right-side task detail panel
-- Task comments with inline edit and delete
-- Task activity timeline for create, edit, move, and comment events
+- Per-task comments with inline edit and delete
+- Activity log for task and comment events
 - Search by title
 - Filter by priority and status
-- Overdue task highlighting
-- Supabase persistence
+- Overdue date highlighting
+- Supabase-backed persistence
 - Anonymous authentication
 - RLS-compatible data flow
 
@@ -32,52 +38,39 @@ TaskFlow is designed to feel like a modern task management product instead of a 
 - date-fns
 - lucide-react
 
-## Local Setup
+## Architecture
 
-1. Install dependencies:
+### Frontend
 
-```bash
-npm install
-```
+- `src/app/App.tsx`
+  Top-level layout, filters, modal state, and task detail panel state
+- `src/hooks/useBoardState.ts`
+  Central task state, Supabase sync, drag-and-drop persistence, and activity logging
+- `src/components/board/*`
+  Board, columns, cards, filters, and task actions
+- `src/components/tasks/*`
+  New task modal and task detail panel
 
-2. Create a local `.env` file in the project root:
+### Data Layer
 
-```env
-VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
+- `src/lib/supabase.ts`
+  Supabase client setup
+- `src/lib/task-service.ts`
+  Task fetch, create, update, delete, and status sync
+- `src/lib/task-collaboration-service.ts`
+  Comments and activity service functions
 
-3. Start the development server:
+## Supabase Requirements
 
-```bash
-npm run dev
-```
+This project expects:
 
-4. Open the local app in your browser using the Vite URL shown in the terminal.
+- Anonymous auth enabled
+- A `tasks` table
+- A `task_comments` table
+- A `task_activity` table
+- RLS policies scoped to `auth.uid() = user_id`
 
-## Supabase Setup
-
-Before running the app, make sure Supabase is configured correctly.
-
-### 1. Enable anonymous auth
-
-In the Supabase dashboard:
-
-1. Open your project
-2. Go to `Authentication`
-3. Enable anonymous sign-ins
-
-### 2. Required tables
-
-This app expects these tables:
-
-- `tasks`
-- `task_comments`
-- `task_activity`
-
-### 3. Tasks table fields
-
-The `tasks` table should support:
+### Tasks table fields
 
 - `id`
 - `title`
@@ -88,9 +81,7 @@ The `tasks` table should support:
 - `user_id`
 - `created_at`
 
-### 4. Comments table fields
-
-The `task_comments` table should support:
+### Task comments table fields
 
 - `id`
 - `task_id`
@@ -98,9 +89,7 @@ The `task_comments` table should support:
 - `content`
 - `created_at`
 
-### 5. Activity table fields
-
-The `task_activity` table should support:
+### Task activity table fields
 
 - `id`
 - `task_id`
@@ -109,7 +98,7 @@ The `task_activity` table should support:
 - `message`
 - `created_at`
 
-If `task_activity.action_type` uses a check constraint, include these values:
+### Supported activity types
 
 - `task_created`
 - `task_updated`
@@ -118,18 +107,28 @@ If `task_activity.action_type` uses a check constraint, include these values:
 - `comment_edited`
 - `comment_deleted`
 
-### 6. Row Level Security
+## Running Locally
 
-RLS should allow authenticated users to access only their own data.
+If you want to run the project on your machine:
 
-At minimum, add policies so users can:
+1. Install dependencies
 
-- select their own tasks, comments, and activity records
-- insert their own tasks, comments, and activity records
-- update their own tasks and comments
-- delete their own tasks and comments
+```bash
+npm install
+```
 
-Use `auth.uid() = user_id` style policies for each table.
+2. Create a local `.env` file in the project root
+
+```env
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+3. Start the dev server
+
+```bash
+npm run dev
+```
 
 ## Available Scripts
 
@@ -140,12 +139,26 @@ npm run preview
 npm run check
 ```
 
+## Deployment
+
+This app is deployed on Vercel.
+
+For production deployment, make sure your hosting environment includes:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Also confirm that:
+
+- Supabase anonymous auth is enabled
+- all required tables exist
+- RLS policies are active for tasks, comments, and activity
+
 ## Project Structure
 
 ```text
 src/
   app/
-    App.tsx
   components/
     board/
     dashboard/
@@ -159,40 +172,15 @@ src/
   types/
 ```
 
-## Main Product Areas
-
-- `src/app/App.tsx`
-  Top-level layout, modal state, detail panel state, and filter state
-- `src/hooks/useBoardState.ts`
-  Central task state, Supabase sync, drag-and-drop persistence, and activity logging
-- `src/components/board/*`
-  Board, columns, cards, filters, and task actions
-- `src/components/tasks/*`
-  New task modal and task detail panel
-- `src/lib/task-service.ts`
-  Task fetch/create/update/delete logic
-- `src/lib/task-collaboration-service.ts`
-  Comments and activity service layer
-- `src/lib/supabase.ts`
-  Supabase client setup
-
-## Deployment
-
-TaskFlow is ready to deploy on Vercel.
-
-For production deployment:
-
-1. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel project settings
-2. Make sure your Supabase project has anonymous auth enabled
-3. Confirm your production database tables and RLS policies are in place
-
 ## Future Improvements
 
-- Real user profiles instead of anonymous sessions
-- Assignee management
-- Persistent task ordering
+- Real user accounts and profiles
+- Persistent card ordering in the database
 - Realtime collaboration
-- Rich text comments
+- Assignee management
 - File attachments
+- Rich text comments
 
+## License
 
+This project is currently intended for portfolio and educational use.

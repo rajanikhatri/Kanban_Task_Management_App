@@ -6,9 +6,11 @@ import type { Task } from '@/types/task';
 
 interface SortableTaskCardProps {
   task: Task;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;
 }
 
-export function SortableTaskCard({ task }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, onEditTask, onDeleteTask }: SortableTaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: {
@@ -28,6 +30,8 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
         transition,
       }}
       isDragging={isDragging}
+      onEditTask={onEditTask}
+      onDeleteTask={onDeleteTask}
     />
   );
 }

@@ -9,9 +9,11 @@ import type { BoardColumnConfig, Task } from '@/types/task';
 interface ColumnProps {
   column: BoardColumnConfig;
   tasks: Task[];
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;
 }
 
-export function Column({ column, tasks }: ColumnProps) {
+export function Column({ column, tasks, onEditTask, onDeleteTask }: ColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: column.id,
     data: {
@@ -57,7 +59,14 @@ export function Column({ column, tasks }: ColumnProps) {
         {tasks.length === 0 ? (
           <EmptyState className={column.tone.empty} />
         ) : (
-          tasks.map((task) => <SortableTaskCard key={task.id} task={task} />)
+          tasks.map((task) => (
+            <SortableTaskCard
+              key={task.id}
+              task={task}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+            />
+          ))
         )}
       </div>
     </section>

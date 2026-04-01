@@ -2,11 +2,14 @@ import type { CSSProperties, HTMLAttributes } from 'react';
 
 import { CalendarDays, Flag } from 'lucide-react';
 
+import { TaskCardActions } from '@/components/board/TaskCardActions';
 import { formatTaskDueDate, isTaskOverdue } from '@/lib/task-utils';
 import type { Task, TaskCardDragProps, TaskPriority } from '@/types/task';
 
 interface TaskCardProps extends TaskCardDragProps {
   task: Task;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => Promise<void>;
 }
 
 const priorityStyles: Record<
@@ -54,9 +57,12 @@ export function TaskCard({
   dragStyle,
   isDragging = false,
   isDragOverlay = false,
+  onEditTask,
+  onDeleteTask,
 }: TaskCardProps) {
   const priorityStyle = priorityStyles[task.priority];
   const isOverdue = isTaskOverdue(task);
+  const showActions = !isDragOverlay && Boolean(onEditTask && onDeleteTask);
   const overdueDueDateBadgeClassName =
     'inline-flex items-center gap-1.5 rounded-full border border-red-300/90 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-200/90 shadow-[0_12px_22px_-18px_rgba(220,38,38,0.45)]';
   const overdueDueDateContentClassName = 'text-red-700';
@@ -113,12 +119,22 @@ export function TaskCard({
           </div>
         </div>
 
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${getAvatarTone(task.assignee.initials)} text-sm font-semibold text-white shadow-[0_18px_40px_-25px_rgba(15,23,42,0.35)] transition duration-200 group-hover:scale-105`}
-          aria-label={task.assignee.name}
-          title={task.assignee.name}
-        >
-          {task.assignee.initials}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {showActions ? (
+            <TaskCardActions
+              taskTitle={task.title}
+              onEdit={() => onEditTask?.(task)}
+              onDelete={() => onDeleteTask?.(task.id) ?? Promise.resolve()}
+            />
+          ) : null}
+
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${getAvatarTone(task.assignee.initials)} text-sm font-semibold text-white shadow-[0_18px_40px_-25px_rgba(15,23,42,0.35)] transition duration-200 group-hover:scale-105`}
+            aria-label={task.assignee.name}
+            title={task.assignee.name}
+          >
+            {task.assignee.initials}
+          </div>
         </div>
       </div>
     </article>

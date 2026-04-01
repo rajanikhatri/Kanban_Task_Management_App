@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { groupTasksByStatus } from '@/lib/task-utils';
 import {
   createTaskForUser,
+  deleteTaskForUser,
   ensureAnonymousUserId,
   fetchTasksForUser,
+  updateTaskForUser,
   updateTaskStatusForUser,
 } from '@/lib/task-service';
 import type { ColumnDragData, NewTaskInput, Task, TaskDragData, TaskStatus } from '@/types/task';
@@ -35,6 +37,24 @@ function getTaskStatusFromDropTarget(data: unknown): TaskStatus | null {
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong while syncing tasks.';
+}
+
+function updateTaskInCollection(currentTasks: Task[], updatedTask: Task): Task[] {
+  const existingTask = currentTasks.find((task) => task.id === updatedTask.id);
+
+  if (!existingTask) {
+    return currentTasks;
+  }
+
+  if (existingTask.status === updatedTask.status) {
+    return currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task));
+  }
+
+  const tasksByStatus = groupTasksByStatus(currentTasks.filter((task) => task.id !== updatedTask.id));
+
+  tasksByStatus[updatedTask.status] = [...tasksByStatus[updatedTask.status], updatedTask];
+
+  return flattenTasksByStatus(tasksByStatus);
 }
 
 interface MoveTaskResult {
@@ -249,6 +269,69 @@ export function useBoardState() {
     }
   }
 
+  async function editTask(taskId: string, taskInput: NewTaskInput) {
+    if (!currentUserId) {
+      throw new Error('No Supabase user is available yet. Wait for anonymous auth to finish and try again.');
+    }
+
+    const existingTask = tasks.find((task) => task.id === taskId);
+
+    if (!existingTask) {
+      throw new Error('Task not found.');
+    }
+
+    const optimisticTask: Task = {
+      ...existingTask,
+      title: taskInput.title,
+      description: taskInput.description,
+      priority: taskInput.priority,
+      dueDate: taskInput.dueDate,
+      status: taskInput.status,
+    };
+    const previousTasks = tasks;
+
+    setTasks((currentTasks) => updateTaskInCollection(currentTasks, optimisticTask));
+
+    try {
+      const updatedTask = await updateTaskForUser(taskId, currentUserId, taskInput);
+
+      setTasks((currentTasks) => updateTaskInCollection(currentTasks, updatedTask));
+      setError(null);
+    } catch (updateError) {
+      setTasks(previousTasks);
+      const message = getErrorMessage(updateError);
+      setError(message);
+      throw new Error(message);
+    }
+  }
+
+  async function deleteTask(taskId: string) {
+    if (!currentUserId) {
+      throw new Error('No Supabase user is available yet. Wait for anonymous auth to finish and try again.');
+    }
+
+    const existingTask = tasks.find((task) => task.id === taskId);
+
+    if (!existingTask) {
+      return;
+    }
+
+    const previousTasks = tasks;
+
+    setActiveTaskId((currentActiveTaskId) => (currentActiveTaskId === taskId ? null : currentActiveTaskId));
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
+
+    try {
+      await deleteTaskForUser(taskId, currentUserId);
+      setError(null);
+    } catch (deleteError) {
+      setTasks(previousTasks);
+      const message = getErrorMessage(deleteError);
+      setError(message);
+      throw new Error(message);
+    }
+  }
+
   return {
     tasks,
     activeTask,
@@ -258,6 +341,8 @@ export function useBoardState() {
     canManageTasks: Boolean(currentUserId),
     refreshTasks,
     addTask,
+    editTask,
+    deleteTask,
     handleDragStart,
     handleDragCancel,
     handleDragEnd,

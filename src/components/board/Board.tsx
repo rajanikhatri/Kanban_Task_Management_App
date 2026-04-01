@@ -19,12 +19,23 @@ interface BoardProps {
   columns: BoardColumnConfig[];
   tasks: Task[];
   activeTask: Task | null;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;
   onDragStart: (event: DragStartEvent) => void;
   onDragCancel: () => void;
   onDragEnd: (event: DragEndEvent) => void;
 }
 
-export function Board({ columns, tasks, activeTask, onDragStart, onDragCancel, onDragEnd }: BoardProps) {
+export function Board({
+  columns,
+  tasks,
+  activeTask,
+  onEditTask,
+  onDeleteTask,
+  onDragStart,
+  onDragCancel,
+  onDragEnd,
+}: BoardProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -54,7 +65,12 @@ export function Board({ columns, tasks, activeTask, onDragStart, onDragCancel, o
                 items={tasksByStatus[column.id].map((task) => task.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Column column={column} tasks={tasksByStatus[column.id]} />
+                <Column
+                  column={column}
+                  tasks={tasksByStatus[column.id]}
+                  onEditTask={onEditTask}
+                  onDeleteTask={onDeleteTask}
+                />
               </SortableContext>
             ))}
           </div>

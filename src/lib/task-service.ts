@@ -99,6 +99,33 @@ export async function createTaskForUser(userId: string, taskInput: NewTaskInput)
   return mapTaskRow(data as TaskRow);
 }
 
+export async function updateTaskForUser(
+  taskId: string,
+  userId: string,
+  taskInput: NewTaskInput,
+): Promise<Task> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      title: taskInput.title,
+      description: taskInput.description ?? null,
+      status: taskInput.status,
+      priority: taskInput.priority,
+      due_date: taskInput.dueDate ?? null,
+    })
+    .eq('id', taskId)
+    .eq('user_id', userId)
+    .select(taskSelect)
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return mapTaskRow(data as TaskRow);
+}
+
 export async function updateTaskStatusForUser(
   taskId: string,
   userId: string,
@@ -118,4 +145,13 @@ export async function updateTaskStatusForUser(
   }
 
   return mapTaskRow(data as TaskRow);
+}
+
+export async function deleteTaskForUser(taskId: string, userId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId).eq('user_id', userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

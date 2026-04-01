@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Flag, Layers3, X } from 'lucide-react';
 
-import type { BoardColumnConfig, NewTaskInput, TaskPriority, TaskStatus } from '@/types/task';
+import type { BoardColumnConfig, NewTaskInput, Task, TaskPriority, TaskStatus } from '@/types/task';
 
 interface NewTaskModalProps {
   open: boolean;
   columns: BoardColumnConfig[];
+  editingTask?: Task | null;
   onClose: () => void;
   onCreateTask: (task: NewTaskInput) => Promise<void>;
+  onUpdateTask: (taskId: string, task: NewTaskInput) => Promise<void>;
 }
 
 interface FormState {
@@ -26,12 +28,34 @@ const initialFormState: FormState = {
   status: 'todo',
 };
 
-export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskModalProps) {
+function getInitialFormState(task?: Task | null): FormState {
+  if (!task) {
+    return initialFormState;
+  }
+
+  return {
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+    dueDate: task.dueDate ?? '',
+    status: task.status,
+  };
+}
+
+export function NewTaskModal({
+  open,
+  columns,
+  editingTask = null,
+  onClose,
+  onCreateTask,
+  onUpdateTask,
+}: NewTaskModalProps) {
   const [formState, setFormState] = useState<FormState>(initialFormState);
   const [titleTouched, setTitleTouched] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isEditMode = Boolean(editingTask);
   const titleError = titleTouched && !formState.title.trim() ? 'Title is required.' : '';
   const isSubmitDisabled = !formState.title.trim() || isSubmitting;
   const statusOptions = useMemo(
@@ -67,8 +91,14 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
       setTitleTouched(false);
       setSubmitError(null);
       setIsSubmitting(false);
+      return;
     }
-  }, [open]);
+
+    setFormState(getInitialFormState(editingTask));
+    setTitleTouched(false);
+    setSubmitError(null);
+    setIsSubmitting(false);
+  }, [editingTask, open]);
 
   function handleFieldChange<Key extends keyof FormState>(field: Key, value: FormState[Key]) {
     setFormState((currentState) => ({
@@ -78,7 +108,7 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
   }
 
   function getErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : 'Unable to create the task right now.';
+    return error instanceof Error ? error.message : 'Unable to save the task right now.';
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -93,13 +123,19 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
     setIsSubmitting(true);
 
     try {
-      await onCreateTask({
+      const taskInput = {
         title: formState.title.trim(),
         description: formState.description.trim() || undefined,
         priority: formState.priority,
         dueDate: formState.dueDate || undefined,
         status: formState.status,
-      });
+      };
+
+      if (editingTask) {
+        await onUpdateTask(editingTask.id, taskInput);
+      } else {
+        await onCreateTask(taskInput);
+      }
 
       setFormState(initialFormState);
       setTitleTouched(false);
@@ -124,26 +160,28 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="new-task-title"
+        aria-labelledby="task-modal-title"
         className="w-full max-w-2xl rounded-[2rem] border border-white/80 bg-[var(--tf-app-surface)] p-6 shadow-[0_32px_90px_-45px_rgba(15,23,42,0.45)] backdrop-blur-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">
-              Create Task
+              {isEditMode ? 'Edit Task' : 'Create Task'}
             </p>
-            <h2 id="new-task-title" className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-950">
-              Add a new card to the board
+            <h2 id="task-modal-title" className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-950">
+              {isEditMode ? 'Update this task' : 'Add a new card to the board'}
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Capture the work now and place it directly into the right column.
+              {isEditMode
+                ? 'Adjust the details and save the latest plan back to the board.'
+                : 'Capture the work now and place it directly into the right column.'}
             </p>
           </div>
 
           <button
             type="button"
-            aria-label="Close new task modal"
+            aria-label={isEditMode ? 'Close edit task modal' : 'Close new task modal'}
             onClick={onClose}
             className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-500 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950 hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.3)]"
           >
@@ -259,7 +297,7 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
               disabled={isSubmitDisabled}
               className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-medium text-white shadow-[0_20px_40px_-28px_rgba(15,23,42,0.9)] transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-[0_26px_55px_-25px_rgba(79,70,229,0.75)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-slate-300 disabled:shadow-none"
             >
-              {isSubmitting ? 'Creating...' : 'Create Task'}
+              {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Task'}
             </button>
           </div>
         </form>

@@ -7,9 +7,11 @@ import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { boardColumns } from '@/data/boardColumns';
 import { useBoardState } from '@/hooks/useBoardState';
 import { getBoardStats } from '@/lib/task-utils';
+import type { Task } from '@/types/task';
 
 export default function App() {
-  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const {
     tasks,
     activeTask,
@@ -19,6 +21,8 @@ export default function App() {
     canManageTasks,
     refreshTasks,
     addTask,
+    editTask,
+    deleteTask,
     handleDragStart,
     handleDragCancel,
     handleDragEnd,
@@ -26,10 +30,25 @@ export default function App() {
   const stats = getBoardStats(tasks);
   const shouldRenderBoard = tasks.length > 0 || (!isLoading && !error);
 
+  function handleOpenCreateTaskModal() {
+    setEditingTask(null);
+    setIsTaskModalOpen(true);
+  }
+
+  function handleOpenEditTaskModal(task: Task) {
+    setEditingTask(task);
+    setIsTaskModalOpen(true);
+  }
+
+  function handleCloseTaskModal() {
+    setIsTaskModalOpen(false);
+    setEditingTask(null);
+  }
+
   return (
     <div className="min-h-screen text-slate-900">
       <Navbar
-        onNewTaskClick={() => setIsNewTaskModalOpen(true)}
+        onNewTaskClick={handleOpenCreateTaskModal}
         newTaskDisabled={isLoading || !canManageTasks}
       />
       <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -78,6 +97,8 @@ export default function App() {
               columns={boardColumns}
               tasks={tasks}
               activeTask={activeTask}
+              onEditTask={handleOpenEditTaskModal}
+              onDeleteTask={deleteTask}
               onDragStart={handleDragStart}
               onDragCancel={handleDragCancel}
               onDragEnd={handleDragEnd}
@@ -90,10 +111,12 @@ export default function App() {
         )}
       </main>
       <NewTaskModal
-        open={isNewTaskModalOpen}
+        open={isTaskModalOpen}
         columns={boardColumns}
-        onClose={() => setIsNewTaskModalOpen(false)}
+        editingTask={editingTask}
+        onClose={handleCloseTaskModal}
         onCreateTask={addTask}
+        onUpdateTask={editTask}
       />
     </div>
   );

@@ -7,7 +7,7 @@ interface NewTaskModalProps {
   open: boolean;
   columns: BoardColumnConfig[];
   onClose: () => void;
-  onCreateTask: (task: NewTaskInput) => void;
+  onCreateTask: (task: NewTaskInput) => Promise<void>;
 }
 
 interface FormState {
@@ -29,9 +29,11 @@ const initialFormState: FormState = {
 export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskModalProps) {
   const [formState, setFormState] = useState<FormState>(initialFormState);
   const [titleTouched, setTitleTouched] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const titleError = titleTouched && !formState.title.trim() ? 'Title is required.' : '';
-  const isSubmitDisabled = !formState.title.trim();
+  const isSubmitDisabled = !formState.title.trim() || isSubmitting;
   const statusOptions = useMemo(
     () => columns.map((column) => ({ value: column.id, label: column.title })),
     [columns],
@@ -63,6 +65,8 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
     if (!open) {
       setFormState(initialFormState);
       setTitleTouched(false);
+      setSubmitError(null);
+      setIsSubmitting(false);
     }
   }, [open]);
 
@@ -73,25 +77,39 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
     }));
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unable to create the task right now.';
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTitleTouched(true);
+    setSubmitError(null);
 
     if (!formState.title.trim()) {
       return;
     }
 
-    onCreateTask({
-      title: formState.title.trim(),
-      description: formState.description.trim() || undefined,
-      priority: formState.priority,
-      dueDate: formState.dueDate || undefined,
-      status: formState.status,
-    });
+    setIsSubmitting(true);
 
-    setFormState(initialFormState);
-    setTitleTouched(false);
-    onClose();
+    try {
+      await onCreateTask({
+        title: formState.title.trim(),
+        description: formState.description.trim() || undefined,
+        priority: formState.priority,
+        dueDate: formState.dueDate || undefined,
+        status: formState.status,
+      });
+
+      setFormState(initialFormState);
+      setTitleTouched(false);
+      setSubmitError(null);
+      onClose();
+    } catch (submitTaskError) {
+      setSubmitError(getErrorMessage(submitTaskError));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (!open) {
@@ -224,6 +242,10 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
           </div>
 
           <div className="flex flex-col-reverse gap-3 border-t border-slate-200/80 pt-5 sm:flex-row sm:justify-end">
+            {submitError ? (
+              <p className="self-start text-sm text-red-600 sm:mr-auto sm:self-center">{submitError}</p>
+            ) : null}
+
             <button
               type="button"
               onClick={onClose}
@@ -237,7 +259,7 @@ export function NewTaskModal({ open, columns, onClose, onCreateTask }: NewTaskMo
               disabled={isSubmitDisabled}
               className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-medium text-white shadow-[0_20px_40px_-28px_rgba(15,23,42,0.9)] transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-[0_26px_55px_-25px_rgba(79,70,229,0.75)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-slate-300 disabled:shadow-none"
             >
-              Create Task
+              {isSubmitting ? 'Creating...' : 'Create Task'}
             </button>
           </div>
         </form>

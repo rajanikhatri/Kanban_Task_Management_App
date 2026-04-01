@@ -16,6 +16,8 @@ export interface Task {
   dueDate?: string;
   assignee: Assignee;
   status: TaskStatus;
+  userId?: string;
+  createdAt?: string;
 }
 
 export interface NewTaskInput {

@@ -60,8 +60,9 @@ export function Board({
       onDragCancel={onDragCancel}
       onDragEnd={onDragEnd}
     >
-      <section className="rounded-[2rem] border border-white/70 bg-white/55 p-4 shadow-[var(--tf-shell-shadow)] backdrop-blur-xl sm:p-5">
-        <div className="-mx-1 overflow-x-auto pb-2">
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(244,247,252,0.92))] p-4 shadow-[0_26px_80px_-52px_rgba(15,23,42,0.42),inset_0_1px_0_rgba(255,255,255,0.78)] backdrop-blur-xl sm:p-5">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/45 via-white/12 to-transparent" />
+        <div className="relative -mx-1 overflow-x-auto pb-2">
           <div className="flex min-w-max gap-5 px-1">
             {columns.map((column) => (
               <SortableContext

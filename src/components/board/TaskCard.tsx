@@ -50,6 +50,15 @@ function getAvatarTone(initials: string): string {
   return tones[index];
 }
 
+function isUnassignedAssignee(task: Task): boolean {
+  return (
+    task.assignee.name === 'No Assignee' ||
+    task.assignee.name === 'Unassigned' ||
+    task.assignee.initials === 'NA' ||
+    task.assignee.initials === '?'
+  );
+}
+
 export function TaskCard({
   task,
   cardRef,
@@ -62,6 +71,12 @@ export function TaskCard({
 }: TaskCardProps) {
   const priorityStyle = priorityStyles[task.priority];
   const isOverdue = isTaskOverdue(task);
+  const isUnassigned = isUnassignedAssignee(task);
+  const assigneeLabel = isUnassigned ? 'Unassigned' : task.assignee.name;
+  const avatarText = isUnassigned ? '?' : task.assignee.initials;
+  const avatarClassName = isUnassigned
+    ? 'border border-slate-200/90 bg-slate-100 text-slate-500 shadow-[0_14px_28px_-22px_rgba(15,23,42,0.18)]'
+    : `bg-gradient-to-br ${getAvatarTone(task.assignee.initials)} text-white shadow-[0_18px_40px_-25px_rgba(15,23,42,0.35)]`;
   const showActions = !isDragOverlay && Boolean(onEditTask && onDeleteTask);
   const overdueDueDateBadgeClassName =
     'inline-flex items-center gap-1.5 rounded-full border border-red-300/90 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-200/90 shadow-[0_12px_22px_-18px_rgba(220,38,38,0.45)]';
@@ -86,7 +101,7 @@ export function TaskCard({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <h3 className="text-sm font-semibold leading-6 text-slate-950">{task.title}</h3>
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{task.assignee.name}</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{assigneeLabel}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -129,11 +144,11 @@ export function TaskCard({
           ) : null}
 
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${getAvatarTone(task.assignee.initials)} text-sm font-semibold text-white shadow-[0_18px_40px_-25px_rgba(15,23,42,0.35)] transition duration-200 group-hover:scale-105`}
-            aria-label={task.assignee.name}
-            title={task.assignee.name}
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold transition duration-200 group-hover:scale-105 ${avatarClassName}`}
+            aria-label={assigneeLabel}
+            title={assigneeLabel}
           >
-            {task.assignee.initials}
+            {avatarText}
           </div>
         </div>
       </div>

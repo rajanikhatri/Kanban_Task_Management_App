@@ -70,15 +70,14 @@ export function TaskCardActions({ taskTitle, onEdit, onDelete }: TaskCardActions
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col items-end gap-2 transition duration-200 ${
-        isOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
-      }`}
+      className="relative flex flex-col items-end gap-2"
       onPointerDown={stopCardInteraction}
       onKeyDown={stopCardInteraction}
     >
       <button
         type="button"
         aria-label={`Open actions for ${taskTitle}`}
+        title="Task actions"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={() => {
@@ -86,8 +85,10 @@ export function TaskCardActions({ taskTitle, onEdit, onDelete }: TaskCardActions
           setIsConfirmingDelete(false);
           setActionError(null);
         }}
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-white/90 text-slate-400 shadow-[0_16px_28px_-24px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-700 hover:shadow-[0_18px_28px_-20px_rgba(15,23,42,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 ${
-          isOpen ? 'border-slate-300 text-slate-700 shadow-[0_18px_30px_-22px_rgba(15,23,42,0.24)]' : ''
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/90 bg-slate-50/95 text-slate-500 shadow-[0_16px_28px_-24px_rgba(15,23,42,0.28)] ring-1 ring-white/70 transition-[transform,box-shadow,border-color,background-color,color,ring-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50/95 hover:text-indigo-600 hover:ring-indigo-100 hover:shadow-[0_20px_34px_-22px_rgba(79,70,229,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-100 ${
+          isOpen
+            ? 'border-indigo-200 bg-indigo-50/95 text-indigo-600 ring-indigo-100 shadow-[0_20px_34px_-22px_rgba(79,70,229,0.28)]'
+            : ''
         }`}
       >
         <Ellipsis className="h-4 w-4" />

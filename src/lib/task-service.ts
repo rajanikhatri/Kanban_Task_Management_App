@@ -22,8 +22,8 @@ function mapTaskRow(row: TaskRow): Task {
     priority: row.priority,
     dueDate: row.due_date ?? undefined,
     assignee: {
-      name: 'No Assignee',
-      initials: 'NA',
+      name: 'Unassigned',
+      initials: '?',
     },
     status: row.status,
     userId: row.user_id,

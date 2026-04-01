@@ -1,17 +1,24 @@
-import { useState } from 'react';
+import { useDeferredValue, useState } from 'react';
 
 import { Board } from '@/components/board/Board';
+import { BoardFilters } from '@/components/board/BoardFilters';
 import { StatsBar } from '@/components/dashboard/StatsBar';
 import { Navbar } from '@/components/layout/Navbar';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
 import { boardColumns } from '@/data/boardColumns';
 import { useBoardState } from '@/hooks/useBoardState';
-import { getBoardStats } from '@/lib/task-utils';
-import type { Task } from '@/types/task';
+import {
+  filterTasks,
+  getBoardStats,
+  hasActiveTaskFilters,
+  initialTaskFilters,
+} from '@/lib/task-utils';
+import type { Task, TaskFilters, TaskPriorityFilter, TaskStatusFilter } from '@/types/task';
 
 export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [filters, setFilters] = useState<TaskFilters>(initialTaskFilters);
   const {
     tasks,
     activeTask,
@@ -27,8 +34,18 @@ export default function App() {
     handleDragCancel,
     handleDragEnd,
   } = useBoardState();
+  const deferredSearchQuery = useDeferredValue(filters.searchQuery);
   const stats = getBoardStats(tasks);
+  const filteredTasks = filterTasks(tasks, {
+    ...filters,
+    searchQuery: deferredSearchQuery,
+  });
+  const hasActiveFilters = hasActiveTaskFilters(filters);
   const shouldRenderBoard = tasks.length > 0 || (!isLoading && !error);
+  const emptyStateTitle = hasActiveFilters ? 'No matching tasks' : undefined;
+  const emptyStateDescription = hasActiveFilters
+    ? 'Try adjusting the search or filters to see more work.'
+    : undefined;
 
   function handleOpenCreateTaskModal() {
     setEditingTask(null);
@@ -43,6 +60,31 @@ export default function App() {
   function handleCloseTaskModal() {
     setIsTaskModalOpen(false);
     setEditingTask(null);
+  }
+
+  function handleSearchQueryChange(value: string) {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      searchQuery: value,
+    }));
+  }
+
+  function handlePriorityFilterChange(value: TaskPriorityFilter) {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      priority: value,
+    }));
+  }
+
+  function handleStatusFilterChange(value: TaskStatusFilter) {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      status: value,
+    }));
+  }
+
+  function handleResetFilters() {
+    setFilters(initialTaskFilters);
   }
 
   return (
@@ -93,12 +135,25 @@ export default function App() {
         ) : shouldRenderBoard ? (
           <>
             <StatsBar stats={stats} />
+            <BoardFilters
+              columns={boardColumns}
+              filters={filters}
+              totalTaskCount={tasks.length}
+              visibleTaskCount={filteredTasks.length}
+              hasActiveFilters={hasActiveFilters}
+              onSearchQueryChange={handleSearchQueryChange}
+              onPriorityChange={handlePriorityFilterChange}
+              onStatusChange={handleStatusFilterChange}
+              onReset={handleResetFilters}
+            />
             <Board
               columns={boardColumns}
-              tasks={tasks}
+              tasks={filteredTasks}
               activeTask={activeTask}
               onEditTask={handleOpenEditTaskModal}
               onDeleteTask={deleteTask}
+              emptyStateTitle={emptyStateTitle}
+              emptyStateDescription={emptyStateDescription}
               onDragStart={handleDragStart}
               onDragCancel={handleDragCancel}
               onDragEnd={handleDragEnd}

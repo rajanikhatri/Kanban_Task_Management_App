@@ -11,9 +11,18 @@ interface ColumnProps {
   tasks: Task[];
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => Promise<void>;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
 }
 
-export function Column({ column, tasks, onEditTask, onDeleteTask }: ColumnProps) {
+export function Column({
+  column,
+  tasks,
+  onEditTask,
+  onDeleteTask,
+  emptyStateTitle,
+  emptyStateDescription,
+}: ColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: column.id,
     data: {
@@ -57,7 +66,11 @@ export function Column({ column, tasks, onEditTask, onDeleteTask }: ColumnProps)
         }`}
       >
         {tasks.length === 0 ? (
-          <EmptyState className={column.tone.empty} />
+          <EmptyState
+            className={column.tone.empty}
+            title={emptyStateTitle}
+            description={emptyStateDescription}
+          />
         ) : (
           tasks.map((task) => (
             <SortableTaskCard

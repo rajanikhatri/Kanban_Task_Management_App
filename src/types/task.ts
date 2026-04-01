@@ -2,6 +2,8 @@ import type { CSSProperties, HTMLAttributes } from 'react';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'todo' | 'inProgress' | 'inReview' | 'done';
+export type TaskPriorityFilter = TaskPriority | 'all';
+export type TaskStatusFilter = TaskStatus | 'all';
 
 export interface Assignee {
   name: string;
@@ -26,6 +28,12 @@ export interface NewTaskInput {
   priority: TaskPriority;
   dueDate?: string;
   status: TaskStatus;
+}
+
+export interface TaskFilters {
+  searchQuery: string;
+  priority: TaskPriorityFilter;
+  status: TaskStatusFilter;
 }
 
 export interface TaskCardDragProps {

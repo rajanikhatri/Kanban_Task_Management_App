@@ -21,6 +21,8 @@ interface BoardProps {
   activeTask: Task | null;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => Promise<void>;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
   onDragStart: (event: DragStartEvent) => void;
   onDragCancel: () => void;
   onDragEnd: (event: DragEndEvent) => void;
@@ -32,6 +34,8 @@ export function Board({
   activeTask,
   onEditTask,
   onDeleteTask,
+  emptyStateTitle,
+  emptyStateDescription,
   onDragStart,
   onDragCancel,
   onDragEnd,
@@ -70,6 +74,8 @@ export function Board({
                   tasks={tasksByStatus[column.id]}
                   onEditTask={onEditTask}
                   onDeleteTask={onDeleteTask}
+                  emptyStateTitle={emptyStateTitle}
+                  emptyStateDescription={emptyStateDescription}
                 />
               </SortableContext>
             ))}

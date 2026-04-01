@@ -1,6 +1,6 @@
 import { format, isBefore, parseISO, startOfToday } from 'date-fns';
 
-import type { Task, TaskFilters, TaskStatus } from '@/types/task';
+import type { Task, TaskFilters, TaskPriority, TaskStatus } from '@/types/task';
 
 export interface BoardStats {
   total: number;
@@ -14,6 +14,19 @@ export const initialTaskFilters: TaskFilters = {
   searchQuery: '',
   priority: 'all',
   status: 'all',
+};
+
+export const taskStatusLabels: Record<TaskStatus, string> = {
+  todo: 'To Do',
+  inProgress: 'In Progress',
+  inReview: 'In Review',
+  done: 'Done',
+};
+
+export const taskPriorityLabels: Record<TaskPriority, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
 };
 
 export function groupTasksByStatus(tasks: Task[]): Record<TaskStatus, Task[]> {
@@ -57,6 +70,14 @@ export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
 
 export function hasActiveTaskFilters(filters: TaskFilters): boolean {
   return Boolean(filters.searchQuery.trim()) || filters.priority !== 'all' || filters.status !== 'all';
+}
+
+export function formatTaskStatusLabel(status: TaskStatus): string {
+  return taskStatusLabels[status];
+}
+
+export function formatTaskPriorityLabel(priority: TaskPriority): string {
+  return taskPriorityLabels[priority];
 }
 
 export function formatTaskDueDate(dueDate: string): string {

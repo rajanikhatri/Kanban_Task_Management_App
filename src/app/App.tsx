@@ -1,10 +1,11 @@
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
 
 import { Board } from '@/components/board/Board';
 import { BoardFilters } from '@/components/board/BoardFilters';
 import { StatsBar } from '@/components/dashboard/StatsBar';
 import { Navbar } from '@/components/layout/Navbar';
 import { NewTaskModal } from '@/components/tasks/NewTaskModal';
+import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
 import { boardColumns } from '@/data/boardColumns';
 import { useBoardState } from '@/hooks/useBoardState';
 import {
@@ -18,6 +19,7 @@ import type { Task, TaskFilters, TaskPriorityFilter, TaskStatusFilter } from '@/
 export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [filters, setFilters] = useState<TaskFilters>(initialTaskFilters);
   const {
     tasks,
@@ -25,6 +27,7 @@ export default function App() {
     currentUserId,
     isLoading,
     error,
+    taskMutationVersion,
     canManageTasks,
     refreshTasks,
     addTask,
@@ -41,11 +44,18 @@ export default function App() {
     searchQuery: deferredSearchQuery,
   });
   const hasActiveFilters = hasActiveTaskFilters(filters);
+  const selectedTask = selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) ?? null : null;
   const shouldRenderBoard = tasks.length > 0 || (!isLoading && !error);
   const emptyStateTitle = hasActiveFilters ? 'No matching tasks' : undefined;
   const emptyStateDescription = hasActiveFilters
     ? 'Try adjusting the search or filters to see more work.'
     : undefined;
+
+  useEffect(() => {
+    if (selectedTaskId && !tasks.some((task) => task.id === selectedTaskId)) {
+      setSelectedTaskId(null);
+    }
+  }, [selectedTaskId, tasks]);
 
   function handleOpenCreateTaskModal() {
     setEditingTask(null);
@@ -57,9 +67,17 @@ export default function App() {
     setIsTaskModalOpen(true);
   }
 
+  function handleOpenTaskDetailPanel(task: Task) {
+    setSelectedTaskId(task.id);
+  }
+
   function handleCloseTaskModal() {
     setIsTaskModalOpen(false);
     setEditingTask(null);
+  }
+
+  function handleCloseTaskDetailPanel() {
+    setSelectedTaskId(null);
   }
 
   function handleSearchQueryChange(value: string) {
@@ -150,6 +168,7 @@ export default function App() {
               columns={boardColumns}
               tasks={filteredTasks}
               activeTask={activeTask}
+              onOpenTask={handleOpenTaskDetailPanel}
               onEditTask={handleOpenEditTaskModal}
               onDeleteTask={deleteTask}
               emptyStateTitle={emptyStateTitle}
@@ -172,6 +191,13 @@ export default function App() {
         onClose={handleCloseTaskModal}
         onCreateTask={addTask}
         onUpdateTask={editTask}
+      />
+      <TaskDetailPanel
+        open={Boolean(selectedTask)}
+        task={selectedTask}
+        currentUserId={currentUserId}
+        activityRefreshKey={taskMutationVersion}
+        onClose={handleCloseTaskDetailPanel}
       />
     </div>
   );

@@ -10,6 +10,7 @@ interface TaskCardProps extends TaskCardDragProps {
   task: Task;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => Promise<void>;
+  onOpenTask?: (task: Task) => void;
 }
 
 const priorityStyles: Record<
@@ -68,6 +69,7 @@ export function TaskCard({
   isDragOverlay = false,
   onEditTask,
   onDeleteTask,
+  onOpenTask,
 }: TaskCardProps) {
   const priorityStyle = priorityStyles[task.priority];
   const isOverdue = isTaskOverdue(task);
@@ -95,6 +97,11 @@ export function TaskCard({
       ref={cardRef}
       style={dragStyle as CSSProperties | undefined}
       {...(dragProps as HTMLAttributes<HTMLElement> | undefined)}
+      onClick={() => {
+        if (!isDragOverlay && !isDragging) {
+          onOpenTask?.(task);
+        }
+      }}
       className={`group cursor-grab rounded-[1.35rem] border border-slate-200/70 border-l-4 ${priorityStyle.rail} bg-white/90 p-4 shadow-[var(--tf-card-shadow)] transition-[transform,box-shadow,border-color,ring-color,background-color,filter,opacity] duration-200 ease-out hover:-translate-y-1.5 hover:border-slate-300/90 hover:bg-white hover:[filter:brightness(1.015)] hover:ring-2 hover:ring-slate-200/90 hover:shadow-[0_42px_82px_-30px_rgba(15,23,42,0.42),0_18px_34px_-24px_rgba(15,23,42,0.18)] active:cursor-grabbing ${cardStateClassName}`}
     >
       <div className="flex items-start justify-between gap-3">

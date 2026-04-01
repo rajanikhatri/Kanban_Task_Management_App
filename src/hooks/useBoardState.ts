@@ -2,7 +2,13 @@ import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { useCallback, useEffect, useState } from 'react';
 
-import { groupTasksByStatus } from '@/lib/task-utils';
+import { createTaskActivityForTask } from '@/lib/task-collaboration-service';
+import {
+  formatTaskDueDate,
+  formatTaskPriorityLabel,
+  formatTaskStatusLabel,
+  groupTasksByStatus,
+} from '@/lib/task-utils';
 import {
   createTaskForUser,
   deleteTaskForUser,
@@ -60,6 +66,7 @@ function updateTaskInCollection(currentTasks: Task[], updatedTask: Task): Task[]
 interface MoveTaskResult {
   nextTasks: Task[];
   taskId: string;
+  sourceStatus: TaskStatus;
   targetStatus: TaskStatus;
   shouldPersistStatus: boolean;
 }
@@ -99,6 +106,7 @@ function moveTask(
     return {
       nextTasks: flattenTasksByStatus(tasksByStatus),
       taskId: activeTaskId,
+      sourceStatus,
       targetStatus,
       shouldPersistStatus: false,
     };
@@ -119,6 +127,7 @@ function moveTask(
     return {
       nextTasks: flattenTasksByStatus(tasksByStatus),
       taskId: activeTaskId,
+      sourceStatus,
       targetStatus,
       shouldPersistStatus: false,
     };
@@ -146,9 +155,78 @@ function moveTask(
   return {
     nextTasks: flattenTasksByStatus(tasksByStatus),
     taskId: activeTaskId,
+    sourceStatus,
     targetStatus,
     shouldPersistStatus: true,
   };
+}
+
+function bumpVersion(currentVersion: number): number {
+  return currentVersion + 1;
+}
+
+function formatDueDateChangeMessage(previousDueDate?: string, nextDueDate?: string): string | null {
+  const previousValue = previousDueDate ?? '';
+  const nextValue = nextDueDate ?? '';
+
+  if (previousValue === nextValue) {
+    return null;
+  }
+
+  if (!previousDueDate && nextDueDate) {
+    return `added a due date of ${formatTaskDueDate(nextDueDate)}`;
+  }
+
+  if (previousDueDate && !nextDueDate) {
+    return `removed the due date of ${formatTaskDueDate(previousDueDate)}`;
+  }
+
+  if (previousDueDate && nextDueDate) {
+    return `changed the due date from ${formatTaskDueDate(previousDueDate)} to ${formatTaskDueDate(nextDueDate)}`;
+  }
+
+  return null;
+}
+
+function buildTaskUpdateMessage(previousTask: Task, taskInput: NewTaskInput): string | null {
+  const changes: string[] = [];
+
+  if (previousTask.title !== taskInput.title) {
+    changes.push(`renamed the task from "${previousTask.title}" to "${taskInput.title}"`);
+  }
+
+  const previousDescription = previousTask.description ?? '';
+  const nextDescription = taskInput.description ?? '';
+
+  if (previousDescription !== nextDescription) {
+    if (!previousDescription && nextDescription) {
+      changes.push('added a description');
+    } else if (previousDescription && !nextDescription) {
+      changes.push('cleared the description');
+    } else {
+      changes.push('updated the description');
+    }
+  }
+
+  if (previousTask.priority !== taskInput.priority) {
+    changes.push(
+      `changed priority from ${formatTaskPriorityLabel(previousTask.priority)} to ${formatTaskPriorityLabel(taskInput.priority)}`,
+    );
+  }
+
+  const dueDateChangeMessage = formatDueDateChangeMessage(previousTask.dueDate, taskInput.dueDate);
+
+  if (dueDateChangeMessage) {
+    changes.push(dueDateChangeMessage);
+  }
+
+  if (previousTask.status !== taskInput.status) {
+    changes.push(
+      `changed status from ${formatTaskStatusLabel(previousTask.status)} to ${formatTaskStatusLabel(taskInput.status)}`,
+    );
+  }
+
+  return changes.length > 0 ? `Updated task: ${changes.join('; ')}` : null;
 }
 
 export function useBoardState() {
@@ -157,6 +235,7 @@ export function useBoardState() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [taskMutationVersion, setTaskMutationVersion] = useState(0);
 
   const activeTask = activeTaskId ? tasks.find((task) => task.id === activeTaskId) ?? null : null;
 
@@ -191,6 +270,18 @@ export function useBoardState() {
 
   function handleDragCancel() {
     setActiveTaskId(null);
+  }
+
+  async function recordActivity(taskId: string, actionType: 'task_created' | 'task_updated' | 'task_moved', message: string) {
+    if (!currentUserId) {
+      return;
+    }
+
+    try {
+      await createTaskActivityForTask(taskId, currentUserId, actionType, message);
+    } catch (activityError) {
+      setError(`The task was updated, but its activity log could not be recorded. ${getErrorMessage(activityError)}`);
+    }
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -241,6 +332,12 @@ export function useBoardState() {
         ),
       );
       setError(null);
+      setTaskMutationVersion((currentVersion) => bumpVersion(currentVersion));
+      await recordActivity(
+        updatedTask.id,
+        'task_moved',
+        `Moved from ${formatTaskStatusLabel(moveResult.sourceStatus)} to ${formatTaskStatusLabel(updatedTask.status)}`,
+      );
     } catch (updateError) {
       setTasks(previousTasks);
       setError(getErrorMessage(updateError));
@@ -262,6 +359,12 @@ export function useBoardState() {
         return flattenTasksByStatus(tasksByStatus);
       });
       setError(null);
+      setTaskMutationVersion((currentVersion) => bumpVersion(currentVersion));
+      await recordActivity(
+        createdTask.id,
+        'task_created',
+        `Created task in ${formatTaskStatusLabel(createdTask.status)}`,
+      );
     } catch (createError) {
       const message = getErrorMessage(createError);
       setError(message);
@@ -297,6 +400,13 @@ export function useBoardState() {
 
       setTasks((currentTasks) => updateTaskInCollection(currentTasks, updatedTask));
       setError(null);
+      setTaskMutationVersion((currentVersion) => bumpVersion(currentVersion));
+
+      const activityMessage = buildTaskUpdateMessage(existingTask, taskInput);
+
+      if (activityMessage) {
+        await recordActivity(updatedTask.id, 'task_updated', activityMessage);
+      }
     } catch (updateError) {
       setTasks(previousTasks);
       const message = getErrorMessage(updateError);
@@ -324,6 +434,7 @@ export function useBoardState() {
     try {
       await deleteTaskForUser(taskId, currentUserId);
       setError(null);
+      setTaskMutationVersion((currentVersion) => bumpVersion(currentVersion));
     } catch (deleteError) {
       setTasks(previousTasks);
       const message = getErrorMessage(deleteError);
@@ -338,6 +449,7 @@ export function useBoardState() {
     currentUserId,
     isLoading,
     error,
+    taskMutationVersion,
     canManageTasks: Boolean(currentUserId),
     refreshTasks,
     addTask,

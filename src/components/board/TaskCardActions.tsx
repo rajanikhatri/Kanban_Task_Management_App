@@ -1,4 +1,8 @@
-import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+  SyntheticEvent,
+} from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 
@@ -8,7 +12,7 @@ interface TaskCardActionsProps {
   onDelete: () => Promise<void>;
 }
 
-function stopCardInteraction(event: ReactPointerEvent | ReactKeyboardEvent) {
+function stopCardInteraction(event: ReactPointerEvent | ReactKeyboardEvent | SyntheticEvent) {
   event.stopPropagation();
 }
 
@@ -71,6 +75,7 @@ export function TaskCardActions({ taskTitle, onEdit, onDelete }: TaskCardActions
     <div
       ref={containerRef}
       className="relative flex flex-col items-end gap-2"
+      onClick={stopCardInteraction}
       onPointerDown={stopCardInteraction}
       onKeyDown={stopCardInteraction}
     >

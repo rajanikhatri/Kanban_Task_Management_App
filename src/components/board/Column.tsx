@@ -11,6 +11,7 @@ interface ColumnProps {
   tasks: Task[];
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => Promise<void>;
+  onOpenTask: (task: Task) => void;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
 }
@@ -20,6 +21,7 @@ export function Column({
   tasks,
   onEditTask,
   onDeleteTask,
+  onOpenTask,
   emptyStateTitle,
   emptyStateDescription,
 }: ColumnProps) {
@@ -78,6 +80,7 @@ export function Column({
               task={task}
               onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
+              onOpenTask={onOpenTask}
             />
           ))
         )}

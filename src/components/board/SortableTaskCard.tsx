@@ -8,9 +8,10 @@ interface SortableTaskCardProps {
   task: Task;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => Promise<void>;
+  onOpenTask: (task: Task) => void;
 }
 
-export function SortableTaskCard({ task, onEditTask, onDeleteTask }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, onEditTask, onDeleteTask, onOpenTask }: SortableTaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: {
@@ -32,6 +33,7 @@ export function SortableTaskCard({ task, onEditTask, onDeleteTask }: SortableTas
       isDragging={isDragging}
       onEditTask={onEditTask}
       onDeleteTask={onDeleteTask}
+      onOpenTask={onOpenTask}
     />
   );
 }

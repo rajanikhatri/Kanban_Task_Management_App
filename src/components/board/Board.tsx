@@ -19,6 +19,7 @@ interface BoardProps {
   columns: BoardColumnConfig[];
   tasks: Task[];
   activeTask: Task | null;
+  onOpenTask: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => Promise<void>;
   emptyStateTitle?: string;
@@ -32,6 +33,7 @@ export function Board({
   columns,
   tasks,
   activeTask,
+  onOpenTask,
   onEditTask,
   onDeleteTask,
   emptyStateTitle,
@@ -73,6 +75,7 @@ export function Board({
                 <Column
                   column={column}
                   tasks={tasksByStatus[column.id]}
+                  onOpenTask={onOpenTask}
                   onEditTask={onEditTask}
                   onDeleteTask={onDeleteTask}
                   emptyStateTitle={emptyStateTitle}

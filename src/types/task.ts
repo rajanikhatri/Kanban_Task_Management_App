@@ -36,6 +36,31 @@ export interface TaskFilters {
   status: TaskStatusFilter;
 }
 
+export type TaskActivityActionType =
+  | 'task_created'
+  | 'task_updated'
+  | 'task_moved'
+  | 'comment_added'
+  | 'comment_edited'
+  | 'comment_deleted';
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface TaskActivity {
+  id: string;
+  taskId: string;
+  userId: string;
+  actionType: TaskActivityActionType;
+  message: string;
+  createdAt: string;
+}
+
 export interface TaskCardDragProps {
   cardRef?: (node: HTMLElement | null) => void;
   dragProps?: HTMLAttributes<HTMLElement>;

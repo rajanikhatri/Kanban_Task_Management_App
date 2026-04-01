@@ -1,11 +1,17 @@
+# TaskFlow
 
-  # Kanban Task Management App
+TaskFlow is a Kanban-style task board built with React, TypeScript, Tailwind CSS, dnd-kit, and Supabase.
 
-  This is a code bundle for Kanban Task Management App. The original project is available at https://www.figma.com/design/rGanG3LQAdWEVLKUzk5bAL/Kanban-Task-Management-App.
+## Local Setup
 
-  ## Running the code
+1. Install dependencies with `npm install`.
+2. Add a local `.env` file with:
 
-  Run `npm i` to install the dependencies.
+```env
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-  Run `npm run dev` to start the development server.
+3. Make sure Supabase anonymous sign-ins are enabled and your `tasks` table plus RLS policies are configured.
+4. Start the app with `npm run dev`.
   
